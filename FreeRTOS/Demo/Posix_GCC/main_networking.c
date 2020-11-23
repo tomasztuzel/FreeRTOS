@@ -187,7 +187,9 @@ void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )
 
             #if ( mainCREATE_TCP_ECHO_TASKS_SINGLE == 1 )
                 {
-                    vStartTCPEchoClientTasks_SingleTasks( mainECHO_CLIENT_TASK_STACK_SIZE, mainECHO_CLIENT_TASK_PRIORITY );
+//                    vStartTCPEchoClientTasks_SingleTasks( mainECHO_CLIENT_TASK_STACK_SIZE, mainECHO_CLIENT_TASK_PRIORITY );
+                    //172.19.195.37
+                    vStartSimpleTCPServerTasks(mainECHO_CLIENT_TASK_STACK_SIZE, mainECHO_CLIENT_TASK_PRIORITY);
                 }
             #endif /* mainCREATE_TCP_ECHO_TASKS_SINGLE */
 

@@ -180,7 +180,7 @@ configure the real network connection to use. */
 #define configMAC_ADDR2		0x22
 #define configMAC_ADDR3		0x33
 #define configMAC_ADDR4		0x44
-#define configMAC_ADDR5		0x41
+#define configMAC_ADDR5		0x42
 
 /* Default IP address configuration.  Used in ipconfigUSE_DNS is set to 0, or
 ipconfigUSE_DNS is set to 1 but a DNS server cannot be contacted. */
@@ -188,7 +188,7 @@ ipconfigUSE_DNS is set to 1 but a DNS server cannot be contacted. */
 #define configIP_ADDR0		172
 #define configIP_ADDR1		19
 #define configIP_ADDR2		195
-#define configIP_ADDR3		37
+#define configIP_ADDR3		36
 
 /* Default gateway IP address configuration.  Used in ipconfigUSE_DNS is set to
 0, or ipconfigUSE_DNS is set to 1 but a DNS server cannot be contacted. */

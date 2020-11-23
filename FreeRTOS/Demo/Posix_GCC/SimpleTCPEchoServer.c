@@ -197,6 +197,7 @@ const BaseType_t xBacklog = 20;
 		/* Wait for a client to connect. */
 		xConnectedSocket = FreeRTOS_accept( xListeningSocket, &xClient, &xSize );
 		configASSERT( xConnectedSocket != FREERTOS_INVALID_SOCKET );
+                FreeRTOS_debug_printf( ( "Creating a task\n" ) );
 
 		/* Spawn a task to handle the connection. */
 		xTaskCreate( prvServerConnectionInstance, "EchoServer", usUsedStackSize, ( void * ) xConnectedSocket, tskIDLE_PRIORITY, NULL );
@@ -279,6 +280,7 @@ uint8_t *pucRxBuffer;
 	vPortFree( pucRxBuffer );
 	FreeRTOS_closesocket( xConnectedSocket );
 
+        FreeRTOS_debug_printf( ( "Deleting task" ) );
 	vTaskDelete( NULL );
 }
 /*-----------------------------------------------------------*/
