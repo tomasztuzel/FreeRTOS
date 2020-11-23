@@ -249,11 +249,13 @@ missing data. */
 
 						if( strncmp( pcReceivedString, pcTransmittedString, lTransmitted ) == 0 )
 						{
+                                                        FreeRTOS_debug_printf( ( "Received Correctly" ) );
 							/* The echo reply was received without error. */
 							ulTxRxCycles[ xInstance ]++;
 						}
 						else
 						{
+                                                        FreeRTOS_debug_printf( ( "DID NOT Receive Correctly" ) );
 							/* The received string did not match the transmitted
 							string. */
 							ulTxRxFailures[ xInstance ]++;
