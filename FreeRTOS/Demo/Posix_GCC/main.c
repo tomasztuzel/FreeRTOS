@@ -71,7 +71,7 @@
 #define    FULL_DEMO         1
 #define    ECHO_CLIENT_DEMO  2
 
-#define mainSELECTED_APPLICATION FULL_DEMO
+#define mainSELECTED_APPLICATION ECHO_CLIENT_DEMO
 
 /* This demo uses heap_3.c (the libc provided malloc() and free()). */
 

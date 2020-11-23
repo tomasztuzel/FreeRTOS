@@ -79,6 +79,7 @@
 #include <queue.h>
 #include <timers.h>
 #include <semphr.h>
+#include <FreeRTOSIPConfig.h>
 
 /* Standard demo includes. */
 #include "BlockQ.h"
@@ -397,12 +398,12 @@ HeapStats_t xHeapStats;
 			}
 		#endif /* configSUPPORT_STATIC_ALLOCATION */
 
-		printf( "%s - tick count %u \r\n",
+		FreeRTOS_printf( ( "%s - tick count %u \r\n",
 					pcStatusMessage,
-					xTaskGetTickCount() );
+					xTaskGetTickCount() ) );
 
 		// Reset the error condition
-		pcStatusMessage = "OK: No errors";	
+		pcStatusMessage = "OK: No errors";
 	}
 }
 /*-----------------------------------------------------------*/
