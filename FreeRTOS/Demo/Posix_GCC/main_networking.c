@@ -150,7 +150,7 @@ void *helper_function(void * data) {
     Started = pdTRUE;
 
     for ( ; ; ) {
-        if(uxStreamBufferGetSpace(xRecvBuffer) >= sizeof(temp) || 1)
+        if( uxStreamBufferGetSpace(xRecvBuffer) >= sizeof(temp) )
         {
             count++;
 	    FreeRTOS_debug_printf( ( "helper_function() entered %d. Count = %d\r\n", sizeof( temp ), count ) );
@@ -162,7 +162,7 @@ void *helper_function(void * data) {
         }
         else
         {
-            sleep(4);
+            usleep(100);
         }
     }
 
