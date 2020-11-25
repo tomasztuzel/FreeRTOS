@@ -184,9 +184,9 @@ configure the real network connection to use. */
 
 /* Default IP address configuration.  Used in ipconfigUSE_DNS is set to 0, or
 ipconfigUSE_DNS is set to 1 but a DNS server cannot be contacted. */
-
+//172.31.11.215
 #define configIP_ADDR0		172
-#define configIP_ADDR1		19
+#define configIP_ADDR1		19//19
 #define configIP_ADDR2		195
 #define configIP_ADDR3		36
 

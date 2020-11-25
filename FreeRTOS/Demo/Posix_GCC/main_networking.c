@@ -49,6 +49,9 @@
 /*#include "TCPEchoClient_SingleTasks.h" */
 /*#include "logging.h" */
 #include "TCPEchoClient_SingleTasks.h"
+#include "utils/wait_for_event.h"
+#include "FreeRTOS_Stream_Buffer.h"
+#include "NetworkInterface.h"
 
 /* Simple UDP client and server task parameters. */
 #define mainSIMPLE_UDP_CLIENT_SERVER_TASK_PRIORITY    ( tskIDLE_PRIORITY )
@@ -79,6 +82,8 @@
  */
 #define mainCREATE_TCP_ECHO_TASKS_SINGLE              1
 /*-----------------------------------------------------------*/
+
+extern void vStartSimpleTCPServerTasks( uint16_t usStackSize, UBaseType_t uxPriority, struct event * socket_created  );
 
 /*
  * Just seeds the simple pseudo random number generator.
@@ -119,11 +124,58 @@ const uint8_t ucMACAddress[ 6 ] = { configMAC_ADDR0, configMAC_ADDR1, configMAC_
 /* Use by the pseudo random number generator. */
 static UBaseType_t ulNextRand;
 
+struct event *socket_created = NULL;
 /*-----------------------------------------------------------*/
 
-void main_tcp_echo_client_tasks( void )
+extern BaseType_t Started;
+void *helper_function(void * data) {
+
+    FreeRTOS_debug_printf( ( "***** Reached here at least ******\r\n" ));
+
+    event_wait( socket_created );
+
+    FreeRTOS_debug_printf( ( "Reached here\r\n" ));
+
+    StreamBuffer_t * xRecvBuffer = GetRecvBuffer();
+
+    FreeRTOS_debug_printf( ( "xRecvBuffer = 0x%16x\r\n", xRecvBuffer ) );
+
+    uint8_t temp[100];
+    memset(temp, 0, 100);
+
+    data = &temp[0];
+
+    int count = 0;
+
+    Started = pdTRUE;
+
+    for ( ; ; ) {
+        if(uxStreamBufferGetSpace(xRecvBuffer) >= sizeof(temp) || 1)
+        {
+            count++;
+	    FreeRTOS_debug_printf( ( "helper_function() entered %d. Count = %d\r\n", sizeof( temp ), count ) );
+            uxStreamBufferAdd( xRecvBuffer, 0, (const uint8_t *) data, sizeof( temp ) );
+            FreeRTOS_debug_printf( ( "Size is now %d\r\n", uxStreamBufferGetSize( xRecvBuffer ) ) );
+
+            if( count > 5000 )
+	        break;
+        }
+        else
+        {
+            sleep(4);
+        }
+    }
+
+    for(;;)
+    {
+        sleep(20);
+    }
+}
+
+void main_tcp_echo_client_tasks( struct event * sc )
 {
     const uint32_t ulLongTime_ms = pdMS_TO_TICKS( 1000UL );
+    socket_created = sc;
 
     /*
      * Instructions for using this project are provided on:
@@ -187,9 +239,7 @@ void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )
 
             #if ( mainCREATE_TCP_ECHO_TASKS_SINGLE == 1 )
                 {
-//                    vStartTCPEchoClientTasks_SingleTasks( mainECHO_CLIENT_TASK_STACK_SIZE, mainECHO_CLIENT_TASK_PRIORITY );
-                    //172.19.195.37
-                    vStartSimpleTCPServerTasks(mainECHO_CLIENT_TASK_STACK_SIZE, mainECHO_CLIENT_TASK_PRIORITY);
+                    vStartSimpleTCPServerTasks( mainECHO_CLIENT_TASK_STACK_SIZE, mainECHO_CLIENT_TASK_PRIORITY, socket_created );
                 }
             #endif /* mainCREATE_TCP_ECHO_TASKS_SINGLE */
 

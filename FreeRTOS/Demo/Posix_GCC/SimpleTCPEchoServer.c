@@ -89,6 +89,8 @@
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
 
+#include "utils/wait_for_event.h"
+
 /* Remove the whole file if FreeRTOSIPConfig.h is set to exclude TCP. */
 #if( ipconfigUSE_TCP == 1 )
 
@@ -96,7 +98,7 @@
 #define tcpechoSHUTDOWN_DELAY	( pdMS_TO_TICKS( 5000 ) )
 
 /* The standard echo port number. */
-#define tcpechoPORT_NUMBER		7
+#define tcpechoPORT_NUMBER		8080
 
 /* If ipconfigUSE_TCP_WIN is 1 then the Tx sockets will use a buffer size set by
 ipconfigTCP_TX_BUFFER_LENGTH, and the Tx window size will be
@@ -139,10 +141,10 @@ static uint16_t usUsedStackSize = 0;
 
 /*-----------------------------------------------------------*/
 
-void vStartSimpleTCPServerTasks( uint16_t usStackSize, UBaseType_t uxPriority )
+void vStartSimpleTCPServerTasks( uint16_t usStackSize, UBaseType_t uxPriority, struct event * socket_created  )
 {
 	/* Create the TCP echo server. */
-	xTaskCreate( prvConnectionListeningTask, "ServerListener", usStackSize, NULL, uxPriority + 1, NULL );
+	xTaskCreate( prvConnectionListeningTask, "ServerListener", usStackSize, socket_created, uxPriority + 1, NULL );
 
 	/* Remember the requested stack size so it can be re-used by the server
 	listening task when it creates tasks to handle connections. */
@@ -152,6 +154,8 @@ void vStartSimpleTCPServerTasks( uint16_t usStackSize, UBaseType_t uxPriority )
 
 static void prvConnectionListeningTask( void *pvParameters )
 {
+struct event * socket_created = (struct event *) pvParameters;
+
 struct freertos_sockaddr xClient, xBindAddress;
 Socket_t xListeningSocket, xConnectedSocket;
 socklen_t xSize = sizeof( xClient );
@@ -191,6 +195,8 @@ const BaseType_t xBacklog = 20;
 	xBindAddress.sin_port = FreeRTOS_htons( xBindAddress.sin_port );
 	FreeRTOS_bind( xListeningSocket, &xBindAddress, sizeof( xBindAddress ) );
 	FreeRTOS_listen( xListeningSocket, xBacklog );
+
+        event_signal( socket_created );
 
 	for( ;; )
 	{

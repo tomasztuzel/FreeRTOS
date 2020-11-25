@@ -34,11 +34,11 @@
  * If mainSELECTED_APPLICATION = BLINKY_DEMO the simple blinky demo will be built.
  * The simply blinky demo is implemented and described in main_blinky.c.
  *
- * If mainSELECTED_APPLICATION = FULL_DEMO the more comprehensive test and demo 
+ * If mainSELECTED_APPLICATION = FULL_DEMO the more comprehensive test and demo
  * application built. This is implemented and described in main_full.c.
  *
- * If mainSELECTED_APPLICATION = ECHO_CLIENT_DEMO the tcp echo demo will be built. 
- * This is implemented and described in main_networking.c 
+ * If mainSELECTED_APPLICATION = ECHO_CLIENT_DEMO the tcp echo demo will be built.
+ * This is implemented and described in main_networking.c
  *
  * This file implements the code that is not demo specific, including the
  * hardware setup and FreeRTOS hook functions.
@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <pthread.h>
 
 /* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
@@ -66,6 +67,7 @@
 
 /* Local includes. */
 #include "console.h"
+#include "utils/wait_for_event.h"
 
 #define    BLINKY_DEMO       0
 #define    FULL_DEMO         1
@@ -78,8 +80,18 @@
 /*-----------------------------------------------------------*/
 extern void main_blinky( void );
 extern void main_full( void );
-extern void main_tcp_echo_client_tasks( void );
+extern void main_tcp_echo_client_tasks( struct event * );
+extern void *helper_function(void *);
 static void traceOnEnter( void );
+
+struct thread_info {     /* Used as argument to thread_start() */
+  pthread_t thread_id;   /* ID returned by pthread_create() */
+  int       thread_num;  /* Application-defined thread # */
+  char     *argv_string; /* From command-line argument */
+};
+struct thread_info *tinfo;
+struct event *socket_created;
+
 /*
  * Only the comprehensive demo uses application hook (callback) functions.  See
  * http://www.freertos.org/a00016.html for more information.
@@ -109,7 +121,7 @@ void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer,
  */
 static void prvSaveTraceFile( void );
 
-/*-----------------------------------------------------------*/
+/*--------------------------------------------------------*/
 
 /* When configSUPPORT_STATIC_ALLOCATION is set to 1 the application writer can
 use a callback function to optionally provide the memory required by the idle
@@ -143,8 +155,12 @@ int main( void )
 	console_init();
 	#if ( mainSELECTED_APPLICATION == ECHO_CLIENT_DEMO )
 	{
+                socket_created = event_create();
+		pthread_t socket_thread;
+		pthread_create(&socket_thread, NULL, &helper_function, NULL);
+
 		console_print("Starting echo client demo\n");
-		main_tcp_echo_client_tasks();
+		main_tcp_echo_client_tasks(socket_created);
 	}
 	#elif ( mainSELECTED_APPLICATION == BLINKY_DEMO )
 	{
