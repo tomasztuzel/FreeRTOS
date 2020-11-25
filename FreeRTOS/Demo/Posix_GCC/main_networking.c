@@ -40,6 +40,7 @@
 /* FreeRTOS includes. */
 #include <FreeRTOS.h>
 #include "task.h"
+#include "utils/wait_for_event.h"
 
 /* Demo application includes. */
 #include "FreeRTOS_IP.h"
@@ -49,6 +50,8 @@
 /*#include "TCPEchoClient_SingleTasks.h" */
 /*#include "logging.h" */
 #include "TCPEchoClient_SingleTasks.h"
+#include "FreeRTOS_Stream_Buffer.h"
+#include "NetworkInterface.h"
 
 /* Simple UDP client and server task parameters. */
 #define mainSIMPLE_UDP_CLIENT_SERVER_TASK_PRIORITY    ( tskIDLE_PRIORITY )
@@ -80,6 +83,7 @@
 #define mainCREATE_TCP_ECHO_TASKS_SINGLE              1
 /*-----------------------------------------------------------*/
 
+extern void vStartSimpleTCPServerTasks( uint16_t usStackSize, UBaseType_t uxPriority, struct event * socket_created );
 /*
  * Just seeds the simple pseudo random number generator.
  */
@@ -119,12 +123,45 @@ const uint8_t ucMACAddress[ 6 ] = { configMAC_ADDR0, configMAC_ADDR1, configMAC_
 /* Use by the pseudo random number generator. */
 static UBaseType_t ulNextRand;
 
+struct event *socket_created = NULL;
+
 /*-----------------------------------------------------------*/
 
-void main_tcp_echo_client_tasks( void )
+extern BaseType_t Started;
+void *helper_function(void * data) {
+    event_wait(socket_created);
+    StreamBuffer_t *xRecvBuffer = GetRecvBuffer(); // XXX Need to get this globally
+    //size_t xSpace;
+    //xSpace = uxStreamBufferGetSpace( xRecvBuffer );
+    uint8_t temp[100];
+    memset(temp, 0xf, 100);
+
+    data = &temp[0];
+
+    int count = 0;
+    
+    Started = pdTRUE;
+
+    for (;;) {
+	count++;
+        FreeRTOS_debug_printf( ( "helper_function() entered XXX XXX %d\n", sizeof(*data) ) );
+        uxStreamBufferAdd(xRecvBuffer, 0, (const uint8_t *) &data, sizeof(data));
+
+	if( count > 5000 )
+        break;
+    }
+
+    for(;;)
+    {
+        sleep(20);
+    }
+}
+
+void main_tcp_echo_client_tasks( struct event * sc )
 {
     const uint32_t ulLongTime_ms = pdMS_TO_TICKS( 1000UL );
 
+    socket_created = sc;
     /*
      * Instructions for using this project are provided on:
      * http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/examples_FreeRTOS_simulator.html
@@ -189,7 +226,7 @@ void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )
                 {
 //                    vStartTCPEchoClientTasks_SingleTasks( mainECHO_CLIENT_TASK_STACK_SIZE, mainECHO_CLIENT_TASK_PRIORITY );
                     //172.19.195.37
-                    vStartSimpleTCPServerTasks(mainECHO_CLIENT_TASK_STACK_SIZE, mainECHO_CLIENT_TASK_PRIORITY);
+                    vStartSimpleTCPServerTasks(mainECHO_CLIENT_TASK_STACK_SIZE, mainECHO_CLIENT_TASK_PRIORITY, socket_created);
                 }
             #endif /* mainCREATE_TCP_ECHO_TASKS_SINGLE */
 

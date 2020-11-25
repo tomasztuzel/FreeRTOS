@@ -59,10 +59,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <pthread.h>
 
 /* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
+#include "utils/wait_for_event.h"
 
 /* Local includes. */
 #include "console.h"
@@ -78,8 +80,18 @@
 /*-----------------------------------------------------------*/
 extern void main_blinky( void );
 extern void main_full( void );
-extern void main_tcp_echo_client_tasks( void );
+extern void main_tcp_echo_client_tasks( struct event * );
+extern void *helper_function(void *);
 static void traceOnEnter( void );
+
+struct thread_info {     /* Used as argument to thread_start() */
+  pthread_t thread_id;   /* ID returned by pthread_create() */
+  int       thread_num;  /* Application-defined thread # */
+  char     *argv_string; /* From command-line argument */
+};
+struct thread_info *tinfo;
+struct event *socket_created;
+
 /*
  * Only the comprehensive demo uses application hook (callback) functions.  See
  * http://www.freertos.org/a00016.html for more information.
@@ -143,8 +155,13 @@ int main( void )
 	console_init();
 	#if ( mainSELECTED_APPLICATION == ECHO_CLIENT_DEMO )
 	{
+		socket_created = event_create();
+		pthread_t socket_thread;
+		pthread_create(&socket_thread, NULL, &helper_function, NULL); // Last NULL = data from main()
+		//pthread_create(&tinfo->thread_id, NULL, &helper_function, NULL);
+		// See port.c ^^
 		console_print("Starting echo client demo\n");
-		main_tcp_echo_client_tasks();
+		main_tcp_echo_client_tasks(socket_created);
 	}
 	#elif ( mainSELECTED_APPLICATION == BLINKY_DEMO )
 	{
