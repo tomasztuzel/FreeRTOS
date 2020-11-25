@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <pcap.h>
 
 /* FreeRTOS includes. */
 #include <FreeRTOS.h>
@@ -130,6 +131,8 @@ struct event *socket_created = NULL;
 extern BaseType_t Started;
 void *helper_function(void * data) {
 
+    struct pcap_pkthdr header;
+
     FreeRTOS_debug_printf( ( "***** Reached here at least ******\r\n" ));
 
     event_wait( socket_created );
@@ -140,7 +143,11 @@ void *helper_function(void * data) {
 
     FreeRTOS_debug_printf( ( "xRecvBuffer = 0x%16x\r\n", xRecvBuffer ) );
 
-    uint8_t temp[100];
+    uint8_t temp[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x11,0x22,0x33,0x44,0x42,0x08,0x06,0x00,0x01,0x08,0x00,0x06,0x04,0x00,0x01,0x00,0x11,0x22,0x33,0x44,0x42,0xAC,0x13,0xC3,0x24,0x00,0x00,0x00,0x00,0x00,0x00,0xAC,0x13,0xC3,0x24};
+
+    header.len = sizeof(temp);
+
+//    uint8_t temp[100];
     memset(temp, 0, 100);
 
     data = &temp[0];
@@ -154,6 +161,7 @@ void *helper_function(void * data) {
         {
             count++;
 	    FreeRTOS_debug_printf( ( "helper_function() entered %d. Count = %d\r\n", sizeof( temp ), count ) );
+            uxStreamBufferAdd( xRecvBuffer, 0, (const uint8_t *) &header, sizeof( header ) );
             uxStreamBufferAdd( xRecvBuffer, 0, (const uint8_t *) data, sizeof( temp ) );
             FreeRTOS_debug_printf( ( "Size is now %d\r\n", uxStreamBufferGetSize( xRecvBuffer ) ) );
 
