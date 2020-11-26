@@ -241,6 +241,8 @@ uint8_t *pucRxBuffer;
 			/* Receive data on the socket. */
 			lBytes = FreeRTOS_recv( xConnectedSocket, pucRxBuffer, ipconfigTCP_MSS, 0 );
 
+
+                        FreeRTOS_debug_printf(("%s\r\n", pucRxBuffer));
 			/* If data was received, echo it back. */
 			if( lBytes >= 0 )
 			{
