@@ -1,4 +1,5 @@
-CC := gcc
+CC := clang
+CXX := clang++
 BIN := posix_demo
 
 BUILD_DIR := build
@@ -74,8 +75,8 @@ SOURCE_FILES += ${FREERTOS_PLUS_DIR}/Source/FreeRTOS-Plus-Trace/trcStreamingReco
 SOURCE_FILES += ${FREERTOS_PLUS_DIR}/Source/FreeRTOS-Plus-Trace/streamports/File/trcStreamingPort.c
 
 
-CFLAGS := -ggdb3 -O0 -DprojCOVERAGE_TEST=0 -D_WINDOWS_
-LDFLAGS := -ggdb3 -O0 -pthread -lpcap
+CFLAGS := -ggdb3 -O0 -DprojCOVERAGE_TEST=0 -D_WINDOWS_ -g -O1 -fsanitize=fuzzer
+LDFLAGS := -ggdb3 -O0 -pthread -lpcap -lstdc++
 
 OBJ_FILES = $(SOURCE_FILES:%.c=$(BUILD_DIR)/%.o)
 
@@ -85,8 +86,7 @@ ${BIN} : $(BUILD_DIR)/$(BIN)
 
 ${BUILD_DIR}/${BIN} : ${OBJ_FILES}
 	-mkdir -p ${@D}
-	$(CC) $^ $(CFLAGS) $(INCLUDE_DIRS) ${LDFLAGS} -o $@
-
+	$(CC) $^ $(CFLAGS) $(INCLUDE_DIRS) ${LDFLAGS} /usr/lib/llvm-10/lib/libFuzzer.a -o $@
 
 -include ${DEP_FILE}
 

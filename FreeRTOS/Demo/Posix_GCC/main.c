@@ -134,8 +134,7 @@ StackType_t uxTimerTaskStack[ configTIMER_TASK_STACK_DEPTH ];
 static BaseType_t xTraceRunning = pdTRUE;
 
 /*-----------------------------------------------------------*/
-
-int main( void )
+int temp_main( void )
 {
 	/* Do not include trace code when performing a code coverage analysis. */
 	#if ( projCOVERAGE_TEST != 1 )
@@ -155,12 +154,12 @@ int main( void )
 	console_init();
 	#if ( mainSELECTED_APPLICATION == ECHO_CLIENT_DEMO )
 	{
-                socket_created = event_create();
-		pthread_t socket_thread;
-		pthread_create(&socket_thread, NULL, &helper_function, NULL);
+        socket_created = event_create();
+        pthread_t socket_thread;
+        pthread_create(&socket_thread, NULL, &helper_function, NULL);
 
-		console_print("Starting echo client demo\n");
-		main_tcp_echo_client_tasks(socket_created);
+        console_print("Starting echo client demo\n");
+        main_tcp_echo_client_tasks(socket_created);
 	}
 	#elif ( mainSELECTED_APPLICATION == BLINKY_DEMO )
 	{
@@ -180,6 +179,15 @@ int main( void )
 
 	return 0;
 }
+
+pthread_once_t once_control = PTHREAD_ONCE_INIT;
+
+int LLVMFuzzerTestOneInput(data, size)
+{
+    pthread_once( &once_control, temp_main );
+    // Now access the helper to feed fuzzed data from *data
+}
+
 /*-----------------------------------------------------------*/
 
 void vApplicationMallocFailedHook( void )
