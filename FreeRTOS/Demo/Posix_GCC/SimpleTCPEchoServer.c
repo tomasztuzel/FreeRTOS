@@ -195,8 +195,12 @@ const BaseType_t xBacklog = 20;
 	xBindAddress.sin_port = FreeRTOS_htons( xBindAddress.sin_port );
 	FreeRTOS_bind( xListeningSocket, &xBindAddress, sizeof( xBindAddress ) );
 	FreeRTOS_listen( xListeningSocket, xBacklog );
+        FreeRTOS_debug_printf( ( "Sending the signal\n" ) );
 
         event_signal( socket_created );
+
+         FreeRTOS_debug_printf( ( "Signal sent\n" ) );
+
 
 	for( ;; )
 	{

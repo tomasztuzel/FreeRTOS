@@ -60,10 +60,24 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <pthread.h>
+#include <pcap.h>
 
 /* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
+
+
+#include "FreeRTOS_IP.h"
+#include "FreeRTOS_Sockets.h"
+#include "FreeRTOS_IP_Private.h"
+/*#include "SimpleUDPClientAndServer.h" */
+/*#include "SimpleTCPEchoServer.h" */
+/*#include "TCPEchoClient_SingleTasks.h" */
+/*#include "logging.h" */
+#include "TCPEchoClient_SingleTasks.h"
+#include "utils/wait_for_event.h"
+#include "FreeRTOS_Stream_Buffer.h"
+#include "NetworkInterface.h"
 
 /* Local includes. */
 #include "console.h"
@@ -134,7 +148,7 @@ StackType_t uxTimerTaskStack[ configTIMER_TASK_STACK_DEPTH ];
 static BaseType_t xTraceRunning = pdTRUE;
 
 /*-----------------------------------------------------------*/
-int temp_main( void )
+void * temp_main( void *arg )
 {
 	/* Do not include trace code when performing a code coverage analysis. */
 	#if ( projCOVERAGE_TEST != 1 )
@@ -154,10 +168,6 @@ int temp_main( void )
 	console_init();
 	#if ( mainSELECTED_APPLICATION == ECHO_CLIENT_DEMO )
 	{
-        socket_created = event_create();
-        pthread_t socket_thread;
-        pthread_create(&socket_thread, NULL, &helper_function, NULL);
-
         console_print("Starting echo client demo\n");
         main_tcp_echo_client_tasks(socket_created);
 	}
@@ -176,16 +186,34 @@ int temp_main( void )
 		#error "The selected demo is not valid"
 	}
 	#endif /* if ( mainSELECTED_APPLICATION ) */
-
-	return 0;
 }
 
 pthread_once_t once_control = PTHREAD_ONCE_INIT;
-
+pthread_t main_thread;
 int LLVMFuzzerTestOneInput(data, size)
 {
-    pthread_once( &once_control, temp_main );
-    // Now access the helper to feed fuzzed data from *data
+    struct pcap_pkthdr *header;
+    static int create_event = 0;
+    if(create_event == 0)
+    {
+        socket_created = event_create();
+        create_event = 1;
+        pthread_create( &main_thread, NULL, temp_main, NULL );
+
+        event_wait( socket_created );
+    }
+//    printf("XXX XXX XXX XXX\r\n");
+    header = malloc( sizeof( struct pcap_pkthdr ) );
+
+    StreamBuffer_t * xRecvBuffer = GetRecvBuffer();
+
+    if( (size <= ipconfigNETWORK_MTU + ipSIZE_OF_ETH_HEADER ) &&
+        ( uxStreamBufferGetSpace( xRecvBuffer ) >= ( size + sizeof( *header ) ) ) )
+    {
+        header->len = size;
+        uxStreamBufferAdd( xRecvBuffer, 0, ( const uint8_t * ) header, sizeof( *header ) );
+        uxStreamBufferAdd( xRecvBuffer, 0, ( const uint8_t * ) data, ( size_t ) header->len );
+    }
 }
 
 /*-----------------------------------------------------------*/
