@@ -188,32 +188,30 @@ void * temp_main( void *arg )
 	#endif /* if ( mainSELECTED_APPLICATION ) */
 }
 
-pthread_once_t once_control = PTHREAD_ONCE_INIT;
 pthread_t main_thread;
-int LLVMFuzzerTestOneInput(data, size)
+extern BaseType_t Started;
+int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
-    struct pcap_pkthdr *header;
+    struct pcap_pkthdr header;
     static int create_event = 0;
     if(create_event == 0)
     {
         socket_created = event_create();
         create_event = 1;
         pthread_create( &main_thread, NULL, temp_main, NULL );
-
         event_wait( socket_created );
+        Started = pdTRUE;
     }
-//    printf("XXX XXX XXX XXX\r\n");
-    header = malloc( sizeof( struct pcap_pkthdr ) );
 
     StreamBuffer_t * xRecvBuffer = GetRecvBuffer();
-
     if( (size <= ipconfigNETWORK_MTU + ipSIZE_OF_ETH_HEADER ) &&
-        ( uxStreamBufferGetSpace( xRecvBuffer ) >= ( size + sizeof( *header ) ) ) )
+        ( uxStreamBufferGetSpace( xRecvBuffer ) >= ( size + sizeof( header ) ) ) )
     {
-        header->len = size;
-        uxStreamBufferAdd( xRecvBuffer, 0, ( const uint8_t * ) header, sizeof( *header ) );
-        uxStreamBufferAdd( xRecvBuffer, 0, ( const uint8_t * ) data, ( size_t ) header->len );
+        header.len = size;
+        uxStreamBufferAdd( xRecvBuffer, 0, ( const uint8_t * ) &header, sizeof( header ) );
+        uxStreamBufferAdd( xRecvBuffer, 0, ( const uint8_t * ) data, ( size_t ) header.len );
     }
+    return 0;
 }
 
 /*-----------------------------------------------------------*/
