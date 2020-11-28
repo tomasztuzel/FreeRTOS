@@ -75,7 +75,8 @@ SOURCE_FILES += ${FREERTOS_PLUS_DIR}/Source/FreeRTOS-Plus-Trace/trcStreamingReco
 SOURCE_FILES += ${FREERTOS_PLUS_DIR}/Source/FreeRTOS-Plus-Trace/streamports/File/trcStreamingPort.c
 
 
-CFLAGS := -ggdb3 -O0 -DprojCOVERAGE_TEST=0 -D_WINDOWS_ -g -O1 -fsanitize=fuzzer,address
+CFLAGS := -ggdb3 -O0 -DprojCOVERAGE_TEST=0 -D_WINDOWS_ -g -fsanitize=fuzzer,address,signed-integer-overflow -fprofile-arcs -ftest-coverage
+CXXFLAGS := -O0 -fno-omit-frame-pointer -fsanitize-address-use-after-scope -g -fsanitize=fuzzer,address,signed-integer-overflow -fsanitize-coverage=edge,indirect-calls,trace-cmp,trace-div,trace-gep -fsanitize-recover=fuzzer,address,signed-integer-overflow -fprofile-arcs -ftest-coverage
 LDFLAGS := -ggdb3 -O0 -pthread -lpcap -lstdc++
 
 OBJ_FILES = $(SOURCE_FILES:%.c=$(BUILD_DIR)/%.o)
