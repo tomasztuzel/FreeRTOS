@@ -140,10 +140,35 @@ reused when the server listening task creates tasks to handle connections. */
 static uint16_t usUsedStackSize = 0;
 
 /*-----------------------------------------------------------*/
+static void UDPServer(void *params)
+{
+Socket_t xListeningSocket;
+uint8_t Buffer[2000];
+struct freertos_sockaddr pxSourceAddress;
+struct freertos_sockaddr xClient, xBindAddress;
+uint32_t length = sizeof(pxSourceAddress);
+
+    xListeningSocket = FreeRTOS_socket( FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP );
+    configASSERT( xListeningSocket != FREERTOS_INVALID_SOCKET );
+
+    /* Bind the socket to the port that the client task will send to, then
+       listen for incoming connections. */
+    xBindAddress.sin_port = 0x1234;
+    xBindAddress.sin_port = FreeRTOS_htons( xBindAddress.sin_port );
+
+    FreeRTOS_debug_printf( ( "Bound to %lu\r\n", xBindAddress.sin_port ) );
+    FreeRTOS_bind( xListeningSocket, &xBindAddress, sizeof( xBindAddress ) );
+
+    for(;;)
+    {
+        FreeRTOS_recvfrom(xListeningSocket, Buffer, sizeof(Buffer),0 ,&pxSourceAddress, &length );
+    }
+}
 
 void vStartSimpleTCPServerTasks( uint16_t usStackSize, UBaseType_t uxPriority, struct event * socket_created  )
 {
 	/* Create the TCP echo server. */
+        xTaskCreate( UDPServer, "UDPServerListener", usStackSize, NULL, uxPriority + 1, NULL );
 	xTaskCreate( prvConnectionListeningTask, "ServerListener", usStackSize, socket_created, uxPriority + 1, NULL );
 
 	/* Remember the requested stack size so it can be re-used by the server
