@@ -6,7 +6,7 @@
 	url = https://github.com/ThrowTheSwitch/CMock.git
 [submodule "FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP"]
 	path = FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP
-	url = https://github.com/AniruddhaKanhere/FreeRTOS-Plus-TCP
+	url = https://github.com/tomasztuzel/FreeRTOS-Plus-TCP
         branch = AVP
 [submodule "FreeRTOS-Plus/Source/AWS/device-shadow"]
 	path = FreeRTOS-Plus/Source/AWS/device-shadow
